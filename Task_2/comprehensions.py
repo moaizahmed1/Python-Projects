@@ -12,7 +12,11 @@ squares = [num ** 2 for num in range(1, 11)]
 print(squares)
 
 
+
 # 2. Use a list comprehension with a condition to get only the even numbers from 1 to 20.
+
+
+
 
 even=[num for num in range(1,21) if num % 2 == 0 ]
 print(even)
