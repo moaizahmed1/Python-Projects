@@ -1,27 +1,26 @@
-# Create a Python program that manages bank accounts across three different branches.(Create an Account class (to store name and balance) and a Bank class (to store accounts for a specific branch_name)).
-
-# Methods: * Add credit and debit methods to the Account class to update the balance.
-
-# Task:
-
-# Initialize 3 branches (e.g., North, South, East).
-# Add different accounts in them.
-# Perform a debit on one account and a credit on another.
-# Print the final balances to verify the updates.
-
+import random
 
 class Account:
-    def __init__(self, name, balance=0):
+    def __init__(self, account_id, name, balance, saving_acount):
+        self.account_id = account_id
         self.owner = name
         self.__balance = balance  
+        self.saving_acc = saving_acount
 
     def debit(self, amount):
-        if amount <= self.__balance:  
+        if self.saving_acc:
+            if (self.__balance - amount) >= 500:
+                self.__balance -= amount
+                print("remianinhg balance",self.get_balance())
+                return True
+            print("Transaction failed: Savings requires 500 minimum balance.")
+            return False
+        if amount <= 0:
+            print ("Amount must be Positive")  
             self.__balance -= amount
             return True
-        else:
-            print("Insufficient balance")
-            return False
+        print("Insufficient balance")
+        return False
 
     def credit(self, amount):
         self.__balance += amount
@@ -29,81 +28,123 @@ class Account:
 
     def get_balance(self):  
         return self.__balance
-
-    def show_balance(self):
-        print("Balance:", self.__balance)
-
-
-class Bank:
+class Branch:
     def __init__(self, branch_name):
         self.branch = branch_name
         self.account = {}
 
-    def add_account(self, name, balance):
-        self.account[name] = Account(name, balance)
+    def add_account(self, account_id, name, balance, savings_account):
+        self.account[account_id] = Account(account_id, name, balance, savings_account)
+    
+    def del_account(self, account_id):
+        return self.account.pop(account_id, None)
+    
+    def update_name(self, account_id, new_name):
+        if account_id in self.account:
+            self.account[account_id].owner = new_name
+            return True
+        return False   
+class BankSystem:
+    def __init__(self):
 
-    def get_account(self, name):
-        return self.account.get(name)
+        self.data = {
+            "1": {"name": "Islamabad", "branches": {"1": Branch("F-9"), "2": Branch("Faizabad")}},
+            "2": {"name": "Lahore", "branches": {"1": Branch("Gulberg")}},
+            "3": {"name": "Karachi", "branches": {"1": Branch("Clifton")}}
+        }
+               
 
+    def manage_branches(self):
+        print("\nBranch CRUD")
+        print("1: Add Branch | 2: Delete Branch")
+        choice = input("Choice: ")
+        city_id = input("Enter City ID: ")
+        if city_id not in self.data: 
+            return
+        
+        if choice == "1":
+            name = input("Branch Name: ")
+            new_id = str(len(self.data[city_id]["branches"]) + 1)
+            self.data[city_id]["branches"][new_id] = Branch(name)
+        elif choice == "2":
+            bid = input("Branch ID: ")
+            self.data[city_id]["branches"].pop(bid, None)
 
 def main():
-    branches = {
-        "1": Bank('Islamabad'),
-        "2": Bank('Lahore'),
-        "3": Bank('Karachi')
-    }
+    bank = BankSystem()
     
-    branches["1"].add_account('Moaiz', 1000)
-    branches["2"].add_account('Suffyan', 4000)
-    branches["3"].add_account('Huzaifa', 5000)
-
     while True:
-        print('--------Banking System--------')
-        print('--------Select Branch--------')
-        print('1: Islamabad | 2: Lahore | 3: Karachi | 4: Exit')
+        print("\n1: Islamabad | 2: Lahore | 3: Karachi | 4: Manage Branches | 5: Exit")
+        city_choice = input("Enter City ID: ")
         
-        b_choice = input("Enter any option: ")  
-        
-        if b_choice == "4":  
-            print("Thanks for using our app")
+        if city_choice == "5": 
             break
-        if b_choice not in branches:
-            print("Invalid branch choice.")
+        if city_choice == "4": 
+            bank.manage_branches() 
             continue
-            
-        current_branch = branches[b_choice]
-        name = input("Enter name: ")
-        account = current_branch.get_account(name)
+        if city_choice not in bank.data: 
+            continue
         
-        if not account:
-            print("No account found")
-            continue
-
-        print(f"\n1: Debit | 2: Credit | 3: Show Balance | 4: Back")
-        option = input("Choose Option: ")
-
-        if option == "1":  
-            amt = int(input("Amount: "))
-            if account.debit(amt):
-                print("Transaction successful")
-            else:
-                print("Transaction failed")
-                
-        elif option == "2":  
-            amt = int(input("Amount: "))
-            if account.credit(amt):
-                print("Amount Credited Successfully")
-            else:
-                print("Failed")
-                
-        elif option == "3":
-            print(f"Balance: {account.get_balance()}")
+       
+        branches = bank.data[city_choice]["branches"]
+        
+        
+        print(f"\n--- Branches in {bank.data[city_choice]['name']} ---")
+        for id_number, branch_obj in branches.items():
+            print(f"{id_number}: {branch_obj.branch}")
             
-        elif option == "4":
-            print("Retiurining to main menu......")
+        branch_id = input("Enter Branch ID: ")
+        if branch_id not in branches:
+            print("Invalid Branch ID.")
             continue
-            
+        current_branch = branches[branch_id]
 
+        while True:
+            print(f"\n--- Welcome to {current_branch.branch} ---")
+            print("1: Add Current Account | 2: Add Savings Account | 3: Actions | 4: Update | 5: Delete | 6: Check All Accounts |7: Back")
+            choice = input("Enter Option: ")
+
+            if choice in ["1", "2"]:
+                acc_id = str(random.randint(1000, 9999))
+                name = input("Name: ")
+                bal = int(input("Balance: ") or 0)
+                current_branch.add_account(acc_id, name, bal, (choice == "2"))
+                print(f'Account created! ID: {acc_id}')
+
+            elif choice == '3':
+                acc_id = input('Search ID: ')
+                acc = current_branch.account.get(acc_id)
+                if acc:
+                    op = input('1: Debit | 2: Credit | 3: Balance | 4: Exit: ')
+                    if op == "1": 
+                        acc.debit(int(input('Amt: ')))
+                    elif op == "2": 
+                        acc.credit(int(input('Amt: ')))
+                    elif op == '3': 
+                        print(f'Balance: {acc.get_balance()}')
+                else: print("Not found.")
+
+            elif choice == "4":
+                if current_branch.update_name(input('ID: '), input("New Name: ")): 
+                    print("Updated")
+            elif choice == "5":
+                if current_branch.del_account(input('ID: ')): 
+                    print("Deleted")
+            elif choice == "6":
+                
+                pin = input("Enter Pin to see the accounts: ")
+                
+                if pin == "1234":
+                
+                 account = current_branch.account
+                
+                 if account:
+                    print(f"{branch_obj.branch}: {branch_obj.account}")
+                 else:
+                    print("No accounts found")
+                else:
+                    print('Wrong Pin')
+ 
+            elif choice == "7": 
+                break
 main()
-
-    
